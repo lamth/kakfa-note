@@ -93,7 +93,11 @@ EOF
 
 sudo systemctl start kafka
 
-
+Cấu hình firewalld cho phép port kafka và zookeeper:
+```
+firewall-cmd --add-port=3888/tcp --add-port=2181/tcp --add-port=9092/tcp --add-port=2888/tcp  --permanent
+firewall-cmd --reload
+```
 
 ## Kiểm tra
 
@@ -154,5 +158,64 @@ Nếu mà tạo một cluster với nhiều node/broker. sử dụng nhiều má
 - giá trị *zookeeper.connect* nên thay đổi để tất các các node trỏ về cùng một Zookeeper. theo dạng <HOSTNAME/IP_ADDRESS>:<PORT>
 
 
+Trước khi cài đặt cần xóa hết log và data của kafka và zookeeper cũ.
+
+
+#### Mô hình
+
+![](https://i.imgur.com/ts4Wh6n.png)
+
+#### Các file cấu hình
+`File /etc/hosts trên tất cả các server`
+```
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+192.168.50.10 zookeeper1 kafka1
+192.168.50.11 zookeeper2 kafka2
+192.168.50.12 zookeeper3 kafka3
+```
+
+
+
+`Cấu hình cho Kafka thứ nhất`
+```conf
+broker.id=1
+port=9092
+advertised.listeners=PLAINTEXT://kafka1:9092
+zookeeper.connect=zookeeper2:2181
+log.dirs=/tmp/kafka-logs
+```
+
+`Cấu hình cho Kafka thứ hai`
+```conf
+broker.id=2
+port=9092
+advertised.listeners=PLAINTEXT://kafka2:9092
+zookeeper.connect=zookeeper2:2181
+log.dirs=/tmp/kafka-logs
+```
+
+
+`Cấu hình cho Kafka thứ ba`
+```conf
+broker.id=3
+port=9092
+advertised.listeners=PLAINTEXT://kafka3:9092
+zookeeper.connect=zookeeper2:2181
+log.dirs=/tmp/kafka-logs
+```
+
+`Cấu hình cho zookeeper`
+```conf
+dataDir=/tmp/zookeeper
+clientPort=2181
+maxClientCnxns=0
+admin.enableServer=false
+```
+
+
+Đây là ví dụ về triển khai 3 node kafka ở 3 server khác nhau cùng chỏ về một zookeeper để quản lý.
+Ở bài [tiếp theo](./Zookeeper-cluser-config.md)
 
 
